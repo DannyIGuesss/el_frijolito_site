@@ -9,7 +9,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Menu, Bell, User, LogOut, Settings, ChevronDown } from 'lucide-react';
-import { UserRole } from '@/generated/prisma';
+import { UserRole } from '@/types/auth';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -45,13 +45,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick, user }) => {
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
-      case UserRole.SUPER_ADMIN:
+      case 'SUPER_ADMIN':
         return 'bg-purple-100 text-purple-800';
-      case UserRole.ADMIN:
+      case 'ADMIN':
         return 'bg-blue-100 text-blue-800';
-      case UserRole.MANAGER:
+      case 'MANAGER':
         return 'bg-green-100 text-green-800';
-      case UserRole.STAFF:
+      case 'STAFF':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -120,8 +120,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick, user }) => {
                   <span className="text-sm font-semibold leading-6 text-gray-900">
                     {user?.name || 'Admin User'}
                   </span>
-                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getRoleBadgeColor(user?.role || UserRole.ADMIN)}`}>
-                    {formatRole(user?.role || UserRole.ADMIN)}
+                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getRoleBadgeColor(user?.role || 'ADMIN' as UserRole)}`}>
+                    {formatRole(user?.role || 'ADMIN' as UserRole)}
                   </span>
                 </div>
                 <ChevronDown className="hidden lg:block h-4 w-4 text-gray-400" />
@@ -134,8 +134,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick, user }) => {
                 <div className="px-4 py-3 border-b border-gray-100 lg:hidden">
                   <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                   <p className="text-sm text-gray-500">{user?.email}</p>
-                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium mt-1 ${getRoleBadgeColor(user?.role || UserRole.ADMIN)}`}>
-                    {formatRole(user?.role || UserRole.ADMIN)}
+                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium mt-1 ${getRoleBadgeColor(user?.role || 'ADMIN' as UserRole)}`}>
+                    {formatRole(user?.role || 'ADMIN' as UserRole)}
                   </span>
                 </div>
                 

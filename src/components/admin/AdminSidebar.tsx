@@ -8,7 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserRole } from '@/generated/prisma';
+import { UserRole } from '@/types/auth';
 import {
   Home,
   Menu,
@@ -76,7 +76,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose, userRole }
       name: 'SEO Settings',
       href: '/admin/seo',
       icon: Search,
-      requiredRole: UserRole.ADMIN,
+      requiredRole: 'ADMIN' as UserRole,
     },
     {
       name: 'Catering Requests',
@@ -92,13 +92,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose, userRole }
       name: 'Analytics',
       href: '/admin/analytics',
       icon: BarChart3,
-      requiredRole: UserRole.ADMIN,
+      requiredRole: 'ADMIN' as UserRole,
     },
     {
       name: 'Users',
       href: '/admin/users',
       icon: Users,
-      requiredRole: UserRole.SUPER_ADMIN,
+      requiredRole: 'SUPER_ADMIN' as UserRole,
     },
     {
       name: 'Site Settings',
@@ -115,10 +115,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose, userRole }
     if (!requiredRole || !userRole) return true;
     
     const roleHierarchy = {
-      [UserRole.STAFF]: 1,
-      [UserRole.MANAGER]: 2,
-      [UserRole.ADMIN]: 3,
-      [UserRole.SUPER_ADMIN]: 4,
+      'STAFF': 1,
+      'MANAGER': 2,
+      'ADMIN': 3,
+      'SUPER_ADMIN': 4,
     };
 
     return roleHierarchy[userRole] >= roleHierarchy[requiredRole];

@@ -3,7 +3,7 @@
  * Extends NextAuth types for El Frijolito admin system
  */
 
-import { UserRole } from '../generated/prisma';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'STAFF';
 
 declare module 'next-auth' {
   interface User {

@@ -1,13 +1,14 @@
 /**
  * NextAuth.js configuration for El Frijolito admin authentication
- * Secure admin login with role-based access control
+ * Secure admin login with role-based access control using Supabase
  */
 
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { db } from './db';
-import { UserRole } from '../generated/prisma';
+import { supabase } from './supabase';
+
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'STAFF';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,60 +24,62 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Find user in database
-          const user = await db.user.findUnique({
-            where: { email: credentials.email.toLowerCase() }
-          });
+          // Find user in Supabase database
+          const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', credentials.email.toLowerCase())
+            .single();
 
-          if (!user) {
+          if (userError || !user) {
             return null;
           }
 
           // Check if user is active
-          if (!user.isActive) {
+          if (!user.is_active) {
             throw new Error('Account is deactivated');
           }
 
           // Check for account lockout
-          if (user.lockoutUntil && user.lockoutUntil > new Date()) {
-            const remainingTime = Math.ceil((user.lockoutUntil.getTime() - Date.now()) / 60000);
+          if (user.lockout_until && new Date(user.lockout_until) > new Date()) {
+            const remainingTime = Math.ceil((new Date(user.lockout_until).getTime() - Date.now()) / 60000);
             throw new Error(`Account locked. Try again in ${remainingTime} minutes.`);
           }
 
           // Verify password
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
 
           if (!isPasswordValid) {
             // Increment login attempts
-            const attempts = user.loginAttempts + 1;
-            const lockoutUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null; // 15 min lockout
+            const attempts = user.login_attempts + 1;
+            const lockoutUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null;
 
-            await db.user.update({
-              where: { id: user.id },
-              data: {
-                loginAttempts: attempts,
-                lockoutUntil
-              }
-            });
+            await supabase
+              .from('users')
+              .update({
+                login_attempts: attempts,
+                lockout_until: lockoutUntil
+              })
+              .eq('id', user.id);
 
             return null;
           }
 
           // Reset login attempts and update last login
-          await db.user.update({
-            where: { id: user.id },
-            data: {
-              loginAttempts: 0,
-              lockoutUntil: null,
-              lastLogin: new Date()
-            }
-          });
+          await supabase
+            .from('users')
+            .update({
+              login_attempts: 0,
+              lockout_until: null,
+              last_login: new Date().toISOString()
+            })
+            .eq('id', user.id);
 
           return {
             id: user.id,
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.role as UserRole,
           };
         } catch (error) {
           console.error('Authentication error:', error);
