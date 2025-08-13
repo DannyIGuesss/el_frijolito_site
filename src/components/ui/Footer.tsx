@@ -175,12 +175,23 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
             <p className="text-sm text-gray-300 mb-4 md:mb-0">
               © {currentYear} El Frijolito. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-sm">
+            <div className="flex flex-wrap justify-center md:justify-end items-center gap-4 md:gap-6 text-sm">
               <Link href="/privacy" className="text-gray-300 hover:text-brand-warm-orange transition-colors">
                 Privacy Policy
               </Link>
               <Link href="/terms" className="text-gray-300 hover:text-brand-warm-orange transition-colors">
                 Terms of Service
+              </Link>
+              <div className="h-4 w-px bg-primary-700 hidden md:block"></div>
+              <Link 
+                href="/admin/login" 
+                className="flex items-center gap-1 text-gray-400 hover:text-brand-golden-yellow transition-colors text-xs"
+                title="Admin Dashboard"
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                </svg>
+                Admin
               </Link>
             </div>
           </div>
