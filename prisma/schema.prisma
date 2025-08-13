@@ -1,0 +1,364 @@
+// Prisma schema for El Frijolito Restaurant Management System
+// Comprehensive schema covering all website content for admin customization
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== AUTHENTICATION & USERS =====
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(ADMIN)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Activity tracking
+  lastLogin      DateTime?
+  loginAttempts  Int       @default(0)
+  lockoutUntil   DateTime?
+
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+// ===== RESTAURANT INFORMATION =====
+model RestaurantInfo {
+  id          String   @id @default(cuid())
+  name        String
+  tagline     String
+  taglineEs   String? // Spanish version
+  description String
+  descriptionEs String?
+  
+  // Contact Information
+  phone       String
+  email       String
+  website     String?
+  
+  // Address
+  street      String
+  city        String
+  state       String
+  zipCode     String
+  country     String   @default("US")
+  latitude    Float?
+  longitude   Float?
+  
+  // Business Hours (stored as JSON for flexibility)
+  businessHours Json
+  
+  // Social Media
+  facebookUrl   String?
+  instagramUrl  String?
+  twitterUrl    String?
+  yelpUrl       String?
+  googleUrl     String?
+  
+  // Brand Assets
+  logoUrl       String?
+  logoCloudinaryId String?
+  heroImageUrl  String?
+  heroImageCloudinaryId String?
+  
+  // Settings
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("restaurant_info")
+}
+
+// ===== MENU MANAGEMENT =====
+model MenuCategory {
+  id          String     @id @default(cuid())
+  slug        String     @unique // e.g., "appetizers", "tacos"
+  name        String     // English name
+  nameEs      String?    // Spanish name
+  description String?
+  descriptionEs String?
+  displayOrder Int       @default(0)
+  isActive    Boolean    @default(true)
+  iconEmoji   String?    // For UI display
+  
+  // Relationships
+  menuItems   MenuItem[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id           String      @id @default(cuid())
+  name         String
+  nameEs       String?
+  description  String
+  descriptionEs String?
+  price        Decimal     @db.Decimal(10, 2)
+  
+  // Category relationship
+  categoryId   String
+  category     MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  // Images
+  imageUrl     String?
+  imageCloudinaryId String?
+  galleryImages Json? // Array of image objects
+  
+  // Menu attributes
+  isAvailable  Boolean     @default(true)
+  isPopular    Boolean     @default(false)
+  isFeatured   Boolean     @default(false)
+  spiceLevel   SpiceLevel?
+  
+  // Dietary information
+  dietaryTags  String[]    // ["vegetarian", "gluten-free", etc.]
+  allergens    String[]    // ["nuts", "dairy", etc.]
+  ingredients  String[]
+  ingredientsEs String[]
+  
+  // Nutrition (optional)
+  calories     Int?
+  protein      Float?
+  carbs        Float?
+  fat          Float?
+  
+  // Customization options
+  customizations Json? // Array of customization objects
+  
+  // Ordering
+  displayOrder Int      @default(0)
+  prepTime     Int?     // Preparation time in minutes
+  
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("menu_items")
+}
+
+enum SpiceLevel {
+  MILD
+  MEDIUM
+  HOT
+  EXTRA_HOT
+}
+
+// ===== HOMEPAGE CONTENT MANAGEMENT =====
+model HomePageSection {
+  id          String     @id @default(cuid())
+  sectionKey  String     @unique // "hero", "highlights", "featured-menu", etc.
+  title       String
+  titleEs     String?
+  subtitle    String?
+  subtitleEs  String?
+  content     Json       // Flexible content structure
+  
+  // Images
+  imageUrl    String?
+  imageCloudinaryId String?
+  
+  // Display settings
+  isActive    Boolean    @default(true)
+  displayOrder Int       @default(0)
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("homepage_sections")
+}
+
+// Highlight cards for "Why Choose Us" section
+model RestaurantHighlight {
+  id          String   @id @default(cuid())
+  title       String
+  titleEs     String?
+  description String
+  descriptionEs String?
+  iconEmoji   String
+  imageUrl    String?
+  imageCloudinaryId String?
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("restaurant_highlights")
+}
+
+// ===== SEO MANAGEMENT =====
+model SEOSettings {
+  id          String   @id @default(cuid())
+  pageKey     String   @unique // "home", "menu", "about", etc.
+  title       String
+  description String
+  keywords    String[] // Array of keywords
+  ogTitle     String?
+  ogDescription String?
+  ogImageUrl  String?
+  ogImageCloudinaryId String?
+  twitterTitle String?
+  twitterDescription String?
+  twitterImageUrl String?
+  twitterImageCloudinaryId String?
+  
+  // Structured data
+  structuredData Json?
+  
+  // Custom meta tags
+  customMetaTags Json? // Array of meta tag objects
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("seo_settings")
+}
+
+// ===== SITE SETTINGS =====
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique // "maintenance_mode", "online_ordering_enabled", etc.
+  value     String
+  valueType SettingType @default(STRING)
+  description String?
+  category  String   @default("general")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("site_settings")
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+// ===== MEDIA MANAGEMENT =====
+model MediaAsset {
+  id            String      @id @default(cuid())
+  filename      String
+  originalName  String
+  mimeType      String
+  size          Int
+  width         Int?
+  height        Int?
+  
+  // Cloudinary integration
+  cloudinaryId  String      @unique
+  cloudinaryUrl String
+  
+  // Metadata
+  altText       String?
+  caption       String?
+  tags          String[]
+  category      MediaCategory @default(GENERAL)
+  
+  // Usage tracking
+  usageCount    Int         @default(0)
+  lastUsed      DateTime?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@map("media_assets")
+}
+
+enum MediaCategory {
+  GENERAL
+  MENU_ITEMS
+  RESTAURANT_PHOTOS
+  HERO_IMAGES
+  SOCIAL_MEDIA
+  LOGOS
+}
+
+// ===== CATERING SYSTEM (Phase 6 prep) =====
+model CateringRequest {
+  id          String           @id @default(cuid())
+  customerName String
+  email       String
+  phone       String
+  eventDate   DateTime
+  guestCount  Int
+  eventType   String
+  message     String?
+  
+  // Admin management
+  status      CateringStatus   @default(PENDING)
+  adminNotes  String?
+  estimatedCost Decimal?       @db.Decimal(10, 2)
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@map("catering_requests")
+}
+
+enum CateringStatus {
+  PENDING
+  REVIEWED
+  QUOTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// ===== ANALYTICS & INSIGHTS =====
+model PageView {
+  id        String   @id @default(cuid())
+  page      String   // "/", "/menu", etc.
+  userAgent String?
+  ip        String?
+  referrer  String?
+  timestamp DateTime @default(now())
+  
+  @@map("page_views")
+}
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  source    String   @default("contact_form") // "contact_form", "phone", etc.
+  
+  // Admin management
+  status    InquiryStatus @default(NEW)
+  adminNotes String?
+  respondedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("contact_inquiries")
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  RESPONDED
+  CLOSED
+}
